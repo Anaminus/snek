@@ -205,8 +205,9 @@ func (err UnknownCommand) Error() string {
 // help subcommand has been registered, then the global usage message is written
 // to Stderr.
 //
-// If a subcommand returns an error, then the error is printed to Stderr (except
-// for flag.ErrHelp), followed by a usage message of the command.
+// If a subcommand returns an error, then the error is printed to Stderr. If the
+// error is flag.ErrHelp, then a usage message of the command is written to
+// Stderr instead.
 func (p *Program) Main() {
 	if len(p.Arguments) == 0 {
 		if !p.Has("help") {
@@ -231,10 +232,11 @@ func (p *Program) run(subcommand string) {
 	if err == nil {
 		return
 	}
-	if err != flag.ErrHelp {
-		fmt.Fprintln(p.Stderr, err)
+	if err == flag.ErrHelp {
+		p.WriteUsageOf(p.Stderr, p.Get(subcommand))
+		return
 	}
-	p.WriteUsageOf(p.Stderr, p.Get(subcommand))
+	fmt.Fprintln(p.Stderr, err)
 }
 
 // Input contains inputs to a program or subcommand.
