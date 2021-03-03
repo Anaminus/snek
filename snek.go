@@ -29,7 +29,7 @@
 //     	flags.BoolVar(&c.NoNewline, "n", false, "Suppress trailing newline.")
 //     }
 //
-//     func (c EchoCommand) Run(opt snek.Options) error {
+//     func (c *EchoCommand) Run(opt snek.Options) error {
 //     	if err := opt.ParseFlags(); err != nil {
 //     		return err
 //     	}
