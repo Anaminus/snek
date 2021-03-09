@@ -160,6 +160,9 @@ func (p *Program) RunWithInput(name string, input Input) error {
 	if def.New == nil {
 		return UnknownCommand{Name: name}
 	}
+	if def.Init != nil {
+		def = def.Init(def)
+	}
 	cmd := def.New()
 	opt := Options{
 		FlagSet:  flag.NewFlagSet(p.Program, flag.ContinueOnError),
@@ -233,7 +236,11 @@ func (p *Program) run(subcommand string) {
 		return
 	}
 	if err == flag.ErrHelp {
-		p.WriteUsageOf(p.Stderr, p.Get(subcommand))
+		def := p.Get(subcommand)
+		if def.Init != nil {
+			def = def.Init(def)
+		}
+		p.WriteUsageOf(p.Stderr, def)
 		return
 	}
 	fmt.Fprintln(p.Stderr, err)
@@ -371,6 +378,9 @@ type Def struct {
 
 	// New returns a new instance of the command.
 	New func() Command
+
+	// Init further initializes the definition.
+	Init func(Def) Def
 }
 
 // FlagSetter is implemented by any type that can define flags on a FlagSet.
@@ -452,7 +462,11 @@ func (helpCommand) Run(opt Options) error {
 	}
 	if name := opt.Arg(0); name != "" {
 		if opt.Has(name) {
-			opt.WriteUsageOf(opt.Stderr, opt.Get(name))
+			def := opt.Get(name)
+			if def.Init != nil {
+				def = def.Init(def)
+			}
+			opt.WriteUsageOf(opt.Stderr, def)
 		} else {
 			fmt.Fprintln(opt.Stderr, UnknownCommand{Name: name}.Error())
 			fmt.Fprintln(opt.Stderr, "The following commands are available:")
