@@ -333,6 +333,15 @@ func (r registry) List() []Def {
 	return list
 }
 
+// SetDoc replaces the Doc of the subcommand mapped to the given name. Does
+// nothing if the subcommand does not exist.
+func (r registry) SetDoc(name string, doc Doc) {
+	if def, ok := r[name]; ok {
+		def.Doc = doc
+		r[name] = def
+	}
+}
+
 // WriteSummary writes to w a list of each registered subcommand and its
 // summary.
 func (r registry) WriteSummary(w io.Writer) {
@@ -360,11 +369,8 @@ type Command interface {
 	Run(Options) error
 }
 
-// Def describes a subcommand.
-type Def struct {
-	// Name is the name of the subcommand.
-	Name string
-
+// Doc encapsulates the documentation of a subcommand.
+type Doc struct {
 	// Summary is a short description of the subcommand.
 	Summary string
 
@@ -375,6 +381,15 @@ type Def struct {
 
 	// Description is a detailed description of the subcommand.
 	Description string
+}
+
+// Def describes a subcommand.
+type Def struct {
+	// Name is the name of the subcommand.
+	Name string
+
+	// Doc is the documentation of the subcommand.
+	Doc
 
 	// New returns a new instance of the command.
 	New func() Command
@@ -446,11 +461,13 @@ func (opt Options) WriteGlobalUsage(w io.Writer) {
 
 // helpDef is the definition for the default help command.
 var helpDef = Def{
-	Name:        "help",
-	Summary:     "Display help.",
-	Arguments:   "[command]",
-	Description: "Displays help for a command, or general help if no command is given.",
-	New:         func() Command { return helpCommand{} },
+	Name: "help",
+	Doc: Doc{
+		Summary:     "Display help.",
+		Arguments:   "[command]",
+		Description: "Displays help for a command, or general help if no command is given.",
+	},
+	New: func() Command { return helpCommand{} },
 }
 
 // helpCommand is the implementation of the default help command.
